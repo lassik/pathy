@@ -42,7 +42,6 @@ extern int main(int argc, char **argv)
 
     L = luaL_newstate();
     luaL_openlibs(L);
-
     lua_pushstring(L, PROGNAME);
     lua_setglobal(L, "PROGNAME");
     lua_pushstring(L, PROGVERSION);
@@ -55,9 +54,8 @@ extern int main(int argc, char **argv)
 
     lua_createtable(L, argc-1, 0);
     for (i = 1; i < argc; i++) {
-        lua_pushinteger(L, i);
         lua_pushstring(L, argv[i]);
-        lua_settable(L, -3);
+        lua_rawseti(L, -2, i);
     }
     lua_setglobal(L, "arg");
 
