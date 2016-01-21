@@ -45,6 +45,14 @@ function die(msg)
   os.exit(EXITS.ERROR)
 end
 
+local function exit_on_error(fn)
+  local ok, errmsg = pcall(fn)
+  if not ok then
+    io.stderr:write(PROGNAME..": "..errmsg.."\n")
+    globals.exitcode = EXITS.ERROR
+  end
+end
+
 function prompt_yn(prompt)
   while true do
     io.write(string.format("%s [yN] ", prompt))
@@ -66,32 +74,32 @@ function prompt_yn(prompt)
   end
 end
 
-function get_ls_files_table(fullpaths)
-  -- TODO: Currently always shallow. Would a deep/recurse option be useful?
-  local function populate(dir, tbl)
-    local ok, errmsg = pcall(function() list_files_into_table(dir, tbl) end)
-    if not ok then
-      io.stderr:write(PROGNAME..": "..errmsg.."\n")
-      globals.exitcode = EXITS.ERROR
-    end
-  end
+function get_ls_files_table()
+  -- TODO: Currently always shallow. Would a deep/recursive option be useful?
   local allfiles = {}
-  if fullpaths then
-    for dir in iter_clean_path() do
-      local dirslash = dir.."/"
-      local dirfiles = {}
-      populate(dir, dirfiles)
-      for _, name in ipairs(dirfiles) do
-        table.insert(allfiles, dirslash..name)
-      end
-    end
-  else
-    for dir in iter_clean_path() do
-      populate(dir, allfiles)
+  for dir in iter_clean_path() do
+    local dirslash = dir.."/"
+    local dirfiles = {}
+    exit_on_error(function() list_files_into_table(dir, dirfiles) end)
+    for _, name in ipairs(dirfiles) do
+      table.insert(allfiles, dirslash..name)
     end
   end
   table.sort(allfiles)
   return allfiles
+end
+
+function get_ls_names_table()
+  local hashtable = {}
+  for dir in iter_clean_path() do
+    exit_on_error(function() hash_files_into_table(dir, hashtable) end)
+  end
+  local allnames = {}
+  for name, _ in pairs(hashtable) do
+    table.insert(allnames, name)
+  end
+  table.sort(allnames)
+  return allnames
 end
 
 function checkdirs(dirs)
@@ -198,8 +206,8 @@ function commands.putlast(...)
   set_clean_path(path)
 end
 
-function ls_files(key, fullpaths)
-  local allfiles = get_ls_files_table(fullpaths)
+function ls_files(key, get_list)
+  local allfiles = get_list()
   for _, file in ipairs(allfiles) do
     if (not key) or string.find(file:lower(), key:lower(), 1, true) then
       print(file)
@@ -209,12 +217,12 @@ end
 
 help["ls-files"] = "List all files in path (full pathnames)"
 commands["ls-files"] = function(key)
-  ls_files(key, true)
+  ls_files(key, get_ls_files_table)
 end
 
 help["ls-names"] = "List all files in path (names only)"
 commands["ls-names"] = function(key)
-  ls_files(key, false)
+  ls_files(key, get_ls_names_table)
 end
 
 help["which"] = "See which file matches in path"

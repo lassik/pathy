@@ -11,6 +11,30 @@
 
 #define LUA_REGISTER(L, name) lua_register(L, #name, name)
 
+static void list_dir_entry(lua_State *L, const char *name)
+{
+    lua_pushstring(L, name);
+    lua_rawseti(L, 2, lua_rawlen(L, 2)+1);
+}
+
+static int list_files_into_table(lua_State *L)
+{
+    map_files(L, luaL_checkstring(L, 1), list_dir_entry);
+    return 0;
+}
+
+static void hash_dir_entry(lua_State *L, const char *name)
+{
+    lua_pushboolean(L, 1);
+    lua_setfield(L, 2, name);
+}
+
+static int hash_files_into_table(lua_State *L)
+{
+    map_files(L, luaL_checkstring(L, 1), hash_dir_entry);
+    return 0;
+}
+
 extern int main(int argc, char **argv)
 {
     lua_State *L;
@@ -27,6 +51,7 @@ extern int main(int argc, char **argv)
     LUA_REGISTER(L, write_to_fd3);
     LUA_REGISTER(L, get_directory_diagnostics);
     LUA_REGISTER(L, list_files_into_table);
+    LUA_REGISTER(L, hash_files_into_table);
 
     lua_createtable(L, argc-1, 0);
     for (i = 1; i < argc; i++) {

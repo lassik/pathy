@@ -11,6 +11,8 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
+#include "pathy_os.h"
+
 static struct stat st;
 
 extern int assert_fd3_is_pipe(lua_State *L)
@@ -71,15 +73,12 @@ extern int get_directory_diagnostics(lua_State *L)
     return 1;
 }
 
-extern int list_files_into_table(lua_State *L)
+extern void map_files(lua_State *L, const char *dirpath, void (*mapfun)(lua_State *, const char *))
 {
-    lua_Integer i = 0;
-    const char *dirpath;
     DIR *handle;
     struct dirent *d;
     int firsterror;
 
-    dirpath = luaL_checkstring(L, 1);
     if (!(handle = opendir(dirpath)))
         goto done;
     for (;;) {
@@ -88,16 +87,13 @@ extern int list_files_into_table(lua_State *L)
             break;
         if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
             continue;
-        lua_pushinteger(L, ++i);
-        lua_pushstring(L, d->d_name);
-        lua_settable(L, -3);
+        mapfun(L, d->d_name);
     }
 done:
     firsterror = errno;
     if (handle && (closedir(handle) == -1) && !firsterror)
         firsterror = errno;
     if (firsterror)
-        return luaL_error(L, "cannot list directory %s: %s",
-                          dirpath, strerror(firsterror));
-    return 0;
+        luaL_error(L, "cannot list directory %s: %s",
+                   dirpath, strerror(firsterror));
 }
