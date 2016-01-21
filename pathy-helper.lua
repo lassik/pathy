@@ -12,8 +12,6 @@
 -- 3.  On many successful runs we will write nothing to fd 3. That's
 -- fine: eval "" in shell is a no-op that succeeds.
 
-require "getopt_alt"
-
 -- Globals
 
 local globals = {}
