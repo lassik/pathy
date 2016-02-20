@@ -23,7 +23,7 @@ LUAC="${LUAC:-$default_luac}"
 LUA_CFLAGS="${LUA_CFLAGS:-$($default_lua_cflags_cmd)}"
 LUA_LDFLAGS="${LUA_LDFLAGS:-$($default_lua_ldflags_cmd)}"
 
-$LUAC -o pathy.luac ../getopt_alt.lua ../pathy-helper.lua
+$LUAC -o pathy.luac ../getopt.lua ../pathy-helper.lua
 $LUA ../file2h.lua pathy.luac pathy_lua > pathy_lua.h
 $CC $CFLAGS -I . $LUA_CFLAGS -o pathy-helper ../pathy-helper.c \
     ../pathy_os_unix.c $LDFLAGS $LUA_LDFLAGS -DPROGVERSION="\"$PROGVERSION\""
