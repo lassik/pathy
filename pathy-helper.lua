@@ -298,7 +298,10 @@ function main()
     complete()
   elseif arg[1] == "user" then
     assert_fd3_is_pipe() -- Sanity check so we don't accidentally overwrite curious users' files or something.
-    local arg, opts = getopt(arg, "vq", "V") -- We can cheat here: since we know the first arg is "user", it can't be an option.
+    -- We can cheat here: since we know the first arg is "user", it can't be an
+    -- option.
+    local opts
+    exit_on_error(function() arg, opts = getopt(arg, "vq", "V") end)
     local cmd = commands[#arg < 2 and "help" or arg[2]]
     if not cmd then die("unknown command: "..arg[2]) end
     local cmdargs = {}
