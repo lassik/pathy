@@ -258,6 +258,32 @@ function commands.doctor()
   end
 end
 
+help["shadow"] = "Show name conflicts"
+function commands.shadow()
+  local namedirs = {}
+  for dir in iter_clean_path() do
+    local dirnames = {}
+    exit_on_error(function() list_files_into_table(dir, dirnames) end)
+    for _, name in ipairs(dirnames) do
+      namedirs[name] = namedirs[name] or {}
+      table.insert(namedirs[name], dir)
+    end
+  end
+  local shadownames = {}
+  for name, dirs in pairs(namedirs) do
+    if #dirs > 1 then
+      table.insert(shadownames, name)
+    end
+  end
+  table.sort(shadownames)
+  for _, name in ipairs(shadownames) do
+    print(name)
+    for _, dir in ipairs(namedirs[name]) do
+      print("* "..dir)
+    end
+  end
+end
+
 function commands.version()
   print(string.format("%s %s (%s)", PROGNAME, PROGVERSION, _VERSION))
 end
