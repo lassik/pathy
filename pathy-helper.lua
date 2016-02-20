@@ -301,11 +301,11 @@ function main()
     local arg, opts = getopt(arg, "vq", "V") -- We can cheat here: since we know the first arg is "user", it can't be an option.
     local cmd = commands[#arg < 2 and "help" or arg[2]]
     if not cmd then die("unknown command: "..arg[2]) end
-    local opts = {}
-    for i = 3, #arg do
-      table.insert(opts, arg[i])
+    local cmdargs = {}
+    for i = 3,#arg do
+      table.insert(cmdargs, arg[i])
     end
-    cmd(unpack(opts))
+    cmd(unpack(cmdargs))
     os.exit(globals.exitcode)
   elseif arg[1] == "fail" then  -- For debugging the shell script
     write_to_fd3("this will not be run")
