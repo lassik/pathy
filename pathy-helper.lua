@@ -302,6 +302,7 @@ function main()
     -- option.
     local opts
     exit_on_error(function() arg, opts = getopt(arg, "vq", "V") end)
+    if opts.V then globals.pathvar = opts.V end
     local cmd = commands[#arg < 2 and "help" or arg[2]]
     if not cmd then die("unknown command: "..arg[2]) end
     local cmdargs = {}
