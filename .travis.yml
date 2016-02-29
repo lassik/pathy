@@ -1,0 +1,25 @@
+language: c
+compiler:
+  - clang
+  - gcc
+install:
+  - npm install eclint
+  - git clone --depth=1 --branch=master git://github.com/davidm/lua-inspect.git
+before_script:
+  - eclint check .
+  - lua-inspect/luainspect -fdelimited *.lua
+script:
+  - scripts/build-linux-debian.sh
+after_script:
+  - 'eval "$(build-linux-debian/pathy activate bash)" && pathy version && pathy ls'
+addons:
+  apt:
+    packages:
+      - liblua5.2-dev
+      - lua5.2
+      - nodejs
+env:
+  global:
+    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+    # via the "travis encrypt" command using the project repo's public key
+    - secure: "orE2MI4Z5H7YEQhHTbQrfqzdBJPOxJpxns2Duk3qkdYi5cUdWfG08/dd4a03dSNK1konfwhRJxdTyt7jPZTVbZwUWBK8s8ECoYs0EqYqgYgAzJcin9JY/KDKEcY4p3FDlrdQ7SkLIUNuzbI0Ots8bl9DsS+iWIA+jw5ceCUfo05gFRmfdmtjsMtz24hcsHcQUA5pGeFj6AjwWldwPFmk0rF0UwgWEnneWE2Pmgt+uFJmA+2SYq/zJ4HxZHTZQMl+/ZJMUwlYKygvz3/ML5Fp2fNQPeduD9F0r+yKfnXjSiW7AS2ceo1j+b7C3oAxb7SSJ9cGOwd53sc9PsKdeAqShFybXCvwRRNVTjL2AnsXAi3cgv64p0XmLvrldgDbVLoIQtdJF/j9fI9dUhxWMMl/Hr4jNlZiqyrGxReYkm0Bzk603fXG5PVmQSgLJhwe+Guc00SfdJXpifyF9cmVACAf+2UN5syWLpMJtIbI/yVmliSCMs5qP38NvZ7DsOVewb0ZkvtChHMVXygebv7Sh7/OwU6PAuTsbShxOtZibpKAOrbN8G1rweFDpA1HsAn15ZRssYohSR4V4ohVoGYCcCwUaVdpwRL97Xq32Pfha531X9orbNwwsqQurTmHi9FuXsEv4O0jKmkKBpEjLnNqR/xJeQY9h1zq/ZiYx5QYo+j7B84="
