@@ -229,6 +229,14 @@ function commands.which(name)
   end
 end
 
+help["run-files"] = "Run program reading path filenames from stdin"
+commands["run-files"] = function(...)
+  local files = get_ls_files_table()
+  local pid = start_program(...)
+  for _, file in ipairs(files) do print(file) end
+  os.exit(wait_for_program(pid))
+end
+
 help["doctor"] = "Find potential path problems"
 function commands.doctor()
   local ntotal = 0

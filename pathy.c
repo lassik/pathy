@@ -48,6 +48,8 @@ extern int main(int argc, char **argv)
     lua_setglobal(L, "PROGVERSION");
     LUA_REGISTER(L, assert_fd3_is_pipe);
     LUA_REGISTER(L, write_to_fd3);
+    LUA_REGISTER(L, start_program);
+    LUA_REGISTER(L, wait_for_program);
     LUA_REGISTER(L, get_directory_diagnostics);
     LUA_REGISTER(L, list_files_into_table);
     LUA_REGISTER(L, hash_files_into_table);

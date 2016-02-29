@@ -4,7 +4,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <unistd.h>
-
+#include <stdlib.h>
 #include <string.h>
 
 #include <lua.h>
@@ -33,6 +33,59 @@ extern int write_to_fd3(lua_State *L)
     if ((n < 0) || ((size_t)n != strlen(s)))
         return luaL_error(L, "cannot write more than %zd bytes to fd 3", n);
     return 0;
+}
+
+extern int start_program(lua_State *L)
+{
+    const char **argv = 0;
+    pid_t pid = -1;
+    int fds[2] = {-1, -1};
+    int argc, i, status, firsterror = 0;
+
+    errno = 0;
+    if ((argc = lua_gettop(L)) < 1)
+        goto cleanup;
+    if (!(argv = calloc(argc+1, sizeof(*argv))))
+        goto cleanup;
+    for (i = 0; i < argc; i++)
+        argv[i] = luaL_checkstring(L, i+1);
+    if (pipe(fds) == -1)
+        goto cleanup;
+    if ((pid = fork()) == (pid_t)-1)
+        goto cleanup;
+    if (!pid) {
+        dup2(fds[0], 0);
+        close(fds[0]);
+        close(fds[1]);
+        execvp(argv[0], (char **)argv);
+        _exit(127);
+    }
+    if (dup2(fds[1], 1) == -1)
+        goto cleanup;
+cleanup:
+    firsterror = errno;
+    close(fds[0]);
+    close(fds[1]);
+    free(argv);
+    if (firsterror) {
+        if (pid != (pid_t)-1)
+            waitpid(pid, &status, 0);
+        return luaL_error(L, "cannot run program: %s", strerror(firsterror));
+    }
+    lua_pushinteger(L, pid);
+    return 1;
+}
+
+extern int wait_for_program(lua_State *L)
+{
+    pid_t pid;
+    int status;
+
+    pid = luaL_checkunsigned(L, 1);
+    if ((close(1) == -1) || (waitpid(pid, &status, 0) == -1))
+        return luaL_error(L, "cannot run program: %s", strerror(errno));
+    lua_pushinteger(L, status);
+    return 1;
 }
 
 extern int get_directory_diagnostics(lua_State *L)
