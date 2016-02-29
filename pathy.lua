@@ -369,3 +369,6 @@ function main()
 end
 
 main()
+
+-- Copyright 2014-2016 by Lassi Kortela
+-- SPDX-License-Identifier: MIT

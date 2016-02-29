@@ -1,0 +1,6 @@
+SPDXVersion: SPDX-2.0
+DataLicense: CC0-1.0
+PackageName: pathy
+PackageOriginator: Lassi Kortela
+PackageHomePage: https://github.com/lassik/pathy
+PackageLicenseDeclared: ISC
