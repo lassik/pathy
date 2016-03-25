@@ -1,0 +1,10 @@
+#!/bin/sh -
+default_prefix="/usr"
+default_cc="gcc"
+default_cflags="-Wall -Wextra -g -O"
+default_ldflags=""
+default_lua="lua5.2"
+default_luac="luac5.2"
+default_lua_cflags_cmd="pkg-config --cflags lua5.2"
+default_lua_ldflags_cmd="pkg-config --libs lua5.2"
+. "$(dirname "$0")/build-helper-unix.sh"
