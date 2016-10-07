@@ -292,6 +292,25 @@ function commands.shadow()
   end
 end
 
+function commands.activate()
+  print("_pathy_bin="..get_realpath(getmyname()))
+  print([[
+
+pathy() {
+    local fd3output
+    exec 4>&1
+    IFS= fd3output=$($_pathy_bin "$@" 3>&1 >&4) || return
+    eval "$fd3output"
+}
+
+if [ -n "${BASH_VERSION:-}" ]; then
+    _pathy_complete() {
+        IFS=$'\n' COMPREPLY=($(compgen -W "$($_pathy_bin complete "$COMP_CWORD" "${COMP_WORDS[@]}")" -- "${COMP_WORDS[COMP_CWORD]}"))
+    }
+    complete -o nospace -F _pathy_complete pathy
+fi]])
+end
+
 function commands.version()
   print(string.format("%s %s (%s)", PROGNAME, PROGVERSION, _VERSION))
 end
@@ -314,9 +333,15 @@ function commands.help()
   end
 end
 
-function complete()
-  local cword = tonumber(arg[2])
-  if not (cword and cword % 1 == 0 and cword > 0 and cword < #arg) then
+function commands.fail()
+  -- For debugging the shell script
+  write_to_fd3("this will not be run")
+  os.exit(123)
+end
+
+function commands.complete(cword, ...)
+  cword = tonumber(cword)
+  if not (cword and cword % 1 == 0 and cword > 0 and cword < #arg-1) then
     -- cword is not a valid index into arg so don't offer any completions.
   elseif cword == 1 then
     for name, _ in pairs(commands) do
@@ -328,29 +353,18 @@ function complete()
 end
 
 function main()
-  if arg[1] == "complete" then
-    complete()
-  elseif arg[1] == "user" then
-    assert_fd3_is_pipe() -- Sanity check so we don't accidentally overwrite curious users' files or something.
-    -- We can cheat here: since we know the first arg is "user", it can't be an
-    -- option.
-    local opts
-    exit_on_error(function() arg, opts = getopt(arg, "vq", "V") end)
-    if opts.V then globals.pathvar = opts.V end
-    local cmd = commands[#arg < 2 and "help" or arg[2]]
-    if not cmd then die("unknown command: "..arg[2]) end
-    local cmdargs = {}
-    for i = 3,#arg do
-      table.insert(cmdargs, arg[i])
-    end
-    cmd(unpack(cmdargs))
-    os.exit(globals.exitcode)
-  elseif arg[1] == "fail" then  -- For debugging the shell script
-    write_to_fd3("this will not be run")
-    os.exit(123)
-  else
-    error("bad first arg: "..tostring(arg[1]))
+  --assert_fd3_is_pipe() -- Sanity check so we don't accidentally overwrite curious users' files or something.
+  local opts
+  exit_on_error(function() arg, opts = getopt(arg, "vq", "V") end)
+  if opts.V then globals.pathvar = opts.V end
+  local cmd = commands[#arg < 1 and "help" or arg[1]]
+  if not cmd then die("unknown command: "..arg[1]) end
+  local cmdargs = {}
+  for i = 2,#arg do
+    table.insert(cmdargs, arg[i])
   end
+  cmd(unpack(cmdargs))
+  os.exit(globals.exitcode)
 end
 
 main()

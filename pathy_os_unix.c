@@ -36,6 +36,19 @@ extern int write_to_fd3(lua_State *L)
     return 0;
 }
 
+extern int get_realpath(lua_State *L)
+{
+    const char *oldpath;
+    char *newpath;
+
+    oldpath = luaL_checkstring(L, 1);
+    if (!(newpath = realpath(oldpath, 0)))
+        return luaL_error(L, "%s", strerror(errno));
+    lua_pushstring(L, newpath);
+    free(newpath);
+    return 1;
+}
+
 extern int start_program(lua_State *L)
 {
     const char **argv = 0;

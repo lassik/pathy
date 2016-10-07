@@ -25,7 +25,5 @@ LUA_LDFLAGS="${LUA_LDFLAGS:-$($default_lua_ldflags_cmd)}"
 
 $LUAC -o pathy.luac ../getopt.lua ../pathy.lua
 $LUA ../file2h.lua pathy.luac pathy_lua > pathy_lua.h
-$CC $CFLAGS -I . $LUA_CFLAGS -o pathy-helper ../pathy.c \
-    ../pathy_os_unix.c $LDFLAGS $LUA_LDFLAGS -DPROGVERSION="\"$PROGVERSION\""
-sed "s@PATHY_HELPER=.*@PATHY_HELPER=$PREFIX/libexec/pathy-helper@" \
-    < ../pathy.sh > pathy.sh
+$CC $CFLAGS -I . $LUA_CFLAGS -o pathy ../pathy.c $extra_c_files \
+    $LDFLAGS $LUA_LDFLAGS -DPROGVERSION="\"$PROGVERSION\""
