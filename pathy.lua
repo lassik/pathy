@@ -297,10 +297,10 @@ function commands.activate()
   print([[
 
 pathy() {
-    local fd3output
     exec 4>&1
-    IFS= fd3output=$($_pathy_bin "$@" 3>&1 >&4) || return
-    eval "$fd3output"
+    IFS= _pathy_fd3out=$($_pathy_bin "$@" 3>&1 >&4) || return
+    eval "$_pathy_fd3out"
+    unset _pathy_fd3out
 }
 
 if [ -n "${BASH_VERSION:-}" ]; then
