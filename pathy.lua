@@ -305,12 +305,10 @@ pathy() {
 ]])
   if shell == "bash" then
     print([[
-if [ -n "${BASH_VERSION:-}" ]; then
-    _pathy_complete() {
-        IFS=$'\n' COMPREPLY=($(compgen -W "$($_pathy_bin complete "$COMP_CWORD" "${COMP_WORDS[@]}")" -- "${COMP_WORDS[COMP_CWORD]}"))
-    }
-    complete -o nospace -F _pathy_complete pathy
-fi]])
+_pathy_complete() {
+    IFS=$'\n' COMPREPLY=($(compgen -W "$($_pathy_bin complete "$COMP_CWORD" "${COMP_WORDS[@]}")" -- "${COMP_WORDS[COMP_CWORD]}"))
+}
+complete -o nospace -F _pathy_complete pathy]])
   end
 end
 
