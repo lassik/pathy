@@ -1,7 +1,7 @@
 # Do not run this script directly. It is just a helper for others.
 
 set -eu
-cd "$(dirname "$0")"
+cd "$(dirname "$0")"/..
 
 [ -e build-config.sh ] && { echo "Using build-config.sh"; . ./build-config.sh; }
 

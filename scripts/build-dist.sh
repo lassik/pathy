@@ -1,6 +1,6 @@
 #!/bin/sh -
 set -eu
-cd "$(dirname "$0")"
+cd "$(dirname "$0")"/..
 [ -n "${PROGVERSION:-}" ] || { echo "PROGVERSION must be set"; exit 1; }
 stem="pathy-$PROGVERSION"
 tarfile="$stem.tar.gz"
