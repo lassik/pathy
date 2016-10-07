@@ -1,5 +1,3 @@
-# Do not run this script directly. It is just a helper for others.
-
 set -eu
 cd "$(dirname "$0")"/..
 
@@ -7,10 +5,10 @@ cd "$(dirname "$0")"/..
 
 builddir="$(basename $0)"
 builddir="${builddir%.*}"
-echo "Build directory is $builddir"
 [ -d "$builddir" ] || mkdir -m 0700 "$builddir"
-find "$builddir" -mindepth 1 -delete
+find "$builddir" -depth -mindepth 1 | xargs rm -rf --
 cd "$builddir"
+echo "Entering directory '$PWD'"
 
 PROGVERSION="${PROGVERSION:-built on $(date "+%Y-%m-%d") by $(whoami)}"
 
