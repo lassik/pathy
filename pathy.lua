@@ -346,7 +346,7 @@ function commands.complete(cword, ...)
     -- cword is not a valid index into arg so don't offer any completions.
   elseif cword == 1 then
     for name, _ in pairs(commands) do
-      print(name)
+      print(name.." ")
     end
   else
     -- TODO: cword > 1, completion depends on command
