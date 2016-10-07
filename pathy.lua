@@ -292,7 +292,7 @@ function commands.shadow()
   end
 end
 
-function commands.activate()
+function commands.activate(shell)
   print("_pathy_bin="..get_realpath(getmyname()))
   print([[
 
@@ -302,13 +302,16 @@ pathy() {
     eval "$_pathy_fd3out"
     unset _pathy_fd3out
 }
-
+]])
+  if shell == "bash" then
+    print([[
 if [ -n "${BASH_VERSION:-}" ]; then
     _pathy_complete() {
         IFS=$'\n' COMPREPLY=($(compgen -W "$($_pathy_bin complete "$COMP_CWORD" "${COMP_WORDS[@]}")" -- "${COMP_WORDS[COMP_CWORD]}"))
     }
     complete -o nospace -F _pathy_complete pathy
 fi]])
+  end
 end
 
 function commands.version()
