@@ -167,7 +167,7 @@ var Problems = []Problem{
 
 func cmdDoctor() {
 	nTotal := 0
-	pathList := getCleanPathList()
+	pathList := getRawPathList()
 	seenDirs := map[string]bool{}
 	for _, dir := range pathList {
 		problems := []string{}
@@ -238,8 +238,33 @@ func listSecurityProblems() {
 	//   symlinks to user-/common-group-writable directories or files in path
 }
 
-func getCleanPathList() []string {
+func getRawPathList() []string {
 	return strings.Split(os.Getenv(PathVar), string(os.PathListSeparator))
+}
+
+func cleanPathEntry(dir string) string {
+	dir = filepath.Clean(dir)
+	for strings.HasSuffix(dir, string(os.PathSeparator)) {
+		dir = dir[:len(dir)-1]
+	}
+	return dir
+}
+
+func cleanPathList(pathList []string) []string {
+	newPathList := []string{}
+	seen := map[string]bool{}
+	for _, path := range pathList {
+		newPath := cleanPathEntry(path)
+		if !seen[newPath] {
+			newPathList = append(newPathList, newPath)
+		}
+		seen[newPath] = true
+	}
+	return newPathList
+}
+
+func getCleanPathList() []string {
+	return cleanPathList(getRawPathList())
 }
 
 func quotedPathFromPathList(pathList []string) string {
@@ -260,7 +285,7 @@ func exportFromPathList(pathList []string) string {
 
 func setCleanPathList(pathList []string) {
 	writeToFd3(func() (string, error) {
-		return exportFromPathList(pathList), nil
+		return exportFromPathList(cleanPathList(pathList)), nil
 	})
 }
 
@@ -383,15 +408,15 @@ func cmdExport() {
 }
 
 func cmdLs() {
-	printPathList(getCleanPathList())
+	printPathList(getRawPathList())
 }
 
 func cmdPutFirst() {
-	setCleanPathList(append(flag.Args()[1:], getCleanPathList()...))
+	setCleanPathList(append(flag.Args()[1:], getRawPathList()...))
 }
 
 func cmdPutLast() {
-	setCleanPathList(append(getCleanPathList(), flag.Args()[1:]...))
+	setCleanPathList(append(getRawPathList(), flag.Args()[1:]...))
 }
 
 func cmdRm() {
