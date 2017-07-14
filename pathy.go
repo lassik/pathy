@@ -511,7 +511,9 @@ func initCommands() {
 }
 
 func cmdVersion() {
-	fmt.Printf("%s %s\n", PROGNAME, PROGVERSION)
+	fmt.Printf("%s %s (%s, %s)\n",
+		PROGNAME, PROGVERSION,
+		runtime.GOOS, runtime.Version())
 }
 
 func cmdHelp() {
