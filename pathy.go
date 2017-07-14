@@ -41,7 +41,10 @@ func initKnownPathVars() {
 	}
 	KnownPathVars = []KnownPathVar{
 		KnownPathVar{"CDPATH", true, []string{}},
-		KnownPathVar{"GEM_PATH", false, []string{".rb"}},
+		KnownPathVar{"GEM_PATH", true, []string{".rb"}},
+		KnownPathVar{"GOPATH", true, []string{}},
+		KnownPathVar{"LD_LIBRARY_PATH", false, []string{}},
+		KnownPathVar{"MANPATH", true, []string{".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", ".gz"}},
 		KnownPathVar{"PATH", false, pathExtensions},
 		KnownPathVar{"PYTHONPATH", true, []string{".py", ".pyc"}},
 	}
