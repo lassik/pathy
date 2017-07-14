@@ -332,9 +332,8 @@ func someKeyMatches(s string) bool {
 }
 
 func howAboutThoseFiles(getList func([]string) []string) {
-	key := ""
 	for _, file := range getList(getCleanPathList()) {
-		if keyMatches(key, file) {
+		if someKeyMatches(file) {
 			fmt.Println(file)
 		}
 	}
