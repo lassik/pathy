@@ -444,12 +444,27 @@ func cmdEdit() {
 }
 
 func cmdRunFiles() {
-	//files = get_ls_files_table()
-	//pid = start_program(...)
-	//for _, file := range files {
-	//	fmt.Println(file)
-	//}
-	//os.exit(wait_for_program(pid))
+	if flag.NArg() <= 1 {
+		log.Fatal("usage: run-files cmd args")
+	}
+	cmdName := flag.Args()[1]
+	cmdArgs := flag.Args()[2:]
+	cmd := exec.Command(cmdName, cmdArgs...)
+	stdinPipe, err := cmd.StdinPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, file := range listPathFiles(getCleanPathList()) {
+		fmt.Fprintln(stdinPipe, file)
+	}
+	stdinPipe.Close()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
 }
 
 func cmdExport() {
