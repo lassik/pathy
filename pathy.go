@@ -548,7 +548,7 @@ func initCommands() {
 		Command{"export", cmdExport,
 			"Generate an export statement in shell syntax"},
 		Command{"activate", cmdActivate,
-			"Try this in your shell: eval $(pathy activate)"},
+			`Try this in your shell: eval "$(pathy activate)"`},
 		Command{"version", cmdVersion,
 			"Show version information"},
 	}
