@@ -327,41 +327,45 @@ func someKeyMatches(s string) bool {
 	return false
 }
 
-func howAboutThoseFiles(getList func([]string) []string) {
-	for _, file := range getList(getCleanPathList()) {
+func listPathFiles(pathList []string) []string {
+	ans := []string{}
+	for _, dir := range pathList {
+		filePaths, _ := filepath.Glob(path.Join(dir, "*"))
+		for _, filePath := range filePaths {
+			ans = append(ans, filePath)
+		}
+	}
+	sortInPlace(ans)
+	return ans
+}
+
+func listPathNames(pathList []string) []string {
+	nameSet := map[string]bool{}
+	for _, dir := range pathList {
+		filePaths, _ := filepath.Glob(path.Join(dir, "*"))
+		for _, filePath := range filePaths {
+			name := path.Base(filePath)
+			nameSet[name] = true
+		}
+	}
+	return sortedKeys(nameSet)
+}
+
+func cmdLsFiles() {
+	// TODO: Currently always shallow. Would a deep/recursive option be useful?
+	for _, file := range listPathFiles(getCleanPathList()) {
 		if someKeyMatches(file) {
 			fmt.Println(file)
 		}
 	}
 }
 
-func cmdLsFiles() {
-	// TODO: Currently always shallow. Would a deep/recursive option be useful?
-	howAboutThoseFiles(func(pathList []string) []string {
-		ans := []string{}
-		for _, dir := range pathList {
-			filePaths, _ := filepath.Glob(path.Join(dir, "*"))
-			for _, filePath := range filePaths {
-				ans = append(ans, filePath)
-			}
-		}
-		sortInPlace(ans)
-		return ans
-	})
-}
-
 func cmdLsNames() {
-	howAboutThoseFiles(func(pathList []string) []string {
-		nameSet := map[string]bool{}
-		for _, dir := range pathList {
-			filePaths, _ := filepath.Glob(path.Join(dir, "*"))
-			for _, filePath := range filePaths {
-				name := path.Base(filePath)
-				nameSet[name] = true
-			}
+	for _, name := range listPathNames(getCleanPathList()) {
+		if someKeyMatches(name) {
+			fmt.Println(name)
 		}
-		return sortedKeys(nameSet)
-	})
+	}
 }
 
 func cmdShadow() {
