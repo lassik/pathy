@@ -348,7 +348,8 @@ func cmdLsNames() {
 		for _, dir := range pathList {
 			filePaths, _ := filepath.Glob(path.Join(dir, "*"))
 			for _, filePath := range filePaths {
-				nameSet[filePath] = true
+				name := path.Base(filePath)
+				nameSet[name] = true
 			}
 		}
 		return sortedKeys(nameSet)
