@@ -378,8 +378,12 @@ func cmdShadow() {
 			delete(nameDirs, name)
 		}
 	}
+	hadSome := false
 	for name, dirs := range nameDirs {
-		fmt.Println()
+		if hadSome {
+			fmt.Println()
+		}
+		hadSome = true
 		fmt.Println(name)
 		for _, dir := range dirs {
 			fmt.Println("*", dir)
