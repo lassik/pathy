@@ -368,7 +368,9 @@ func cmdShadow() {
 		filePaths, _ := filepath.Glob(path.Join(dir, "*"))
 		for _, filePath := range filePaths {
 			name := path.Base(filePath)
-			nameDirs[name] = append(nameDirs[name], dir)
+			if someKeyMatches(name) {
+				nameDirs[name] = append(nameDirs[name], dir)
+			}
 		}
 	}
 	for name, dirs := range nameDirs {
