@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strconv"
@@ -310,18 +311,17 @@ func cmdActivate() {
 	fmt.Println(`complete -o nospace -F _pathy_complete pathy`)
 }
 
-func keyMatches(key, s string) bool {
-	return (key == "" ||
-		strings.Contains(strings.ToLower(s), strings.ToLower(key)))
-}
-
 func someKeyMatches(s string) bool {
 	keys := flag.Args()[1:]
 	if len(keys) == 0 {
 		return true
 	}
 	for _, key := range keys {
-		if keyMatches(key, s) {
+		keyRegexp, err := regexp.Compile(strings.ToLower(key))
+		if err != nil {
+			log.Fatal(err)
+		}
+		if keyRegexp.MatchString(strings.ToLower(s)) {
 			return true
 		}
 	}
