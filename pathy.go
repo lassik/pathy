@@ -84,12 +84,6 @@ func confirm(prompt string) bool {
 	}
 }
 
-func printPathList(pathList []string) {
-	for _, dir := range pathList {
-		fmt.Println(dir)
-	}
-}
-
 func sortInPlace(list []string) {
 	sort.SliceStable(
 		sort.StringSlice(list),
@@ -421,7 +415,11 @@ func cmdExport() {
 }
 
 func cmdLs() {
-	printPathList(getRawPathList())
+	for _, dir := range getRawPathList() {
+		if someKeyMatches(dir) {
+			fmt.Println(dir)
+		}
+	}
 }
 
 func cmdPutFirst() {
