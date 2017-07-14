@@ -318,6 +318,19 @@ func keyMatches(key, s string) bool {
 		strings.Contains(strings.ToLower(s), strings.ToLower(key)))
 }
 
+func someKeyMatches(s string) bool {
+	keys := flag.Args()[1:]
+	if len(keys) == 0 {
+		return true
+	}
+	for _, key := range keys {
+		if keyMatches(key, s) {
+			return true
+		}
+	}
+	return false
+}
+
 func howAboutThoseFiles(getList func([]string) []string) {
 	key := ""
 	for _, file := range getList(getCleanPathList()) {
@@ -421,10 +434,6 @@ func cmdPutLast() {
 }
 
 func cmdRm() {
-	key := ""
-	if flag.NArg() >= 1 {
-		key = flag.Arg(1)
-	}
 	newPathList := make([]string, 0)
 	hadAny := false
 	for _, dir := range getCleanPathList() {
@@ -433,7 +442,7 @@ func cmdRm() {
 			fmt.Println("Going through the path list in order. Answer 'y' (yes)")
 			fmt.Println("to the entries you want to remove. Default answer is no.")
 		}
-		rm := keyMatches(key, dir) && confirm(fmt.Sprintf("Remove %s", dir))
+		rm := someKeyMatches(dir) && confirm(fmt.Sprintf("Remove %s", dir))
 		if !rm {
 			newPathList = append(newPathList, dir)
 		}
