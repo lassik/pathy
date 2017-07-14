@@ -392,7 +392,15 @@ func cmdShadow() {
 }
 
 func cmdWhich() {
-	fmt.Println("which")
+	for _, cmd := range flag.Args()[1:] {
+		for _, dir := range getCleanPathList() {
+			fullPath := path.Join(dir, cmd)
+			if _, err := os.Lstat(fullPath); err == nil {
+				fmt.Println(fullPath)
+				break
+			}
+		}
+	}
 }
 
 func cmdEdit() {
