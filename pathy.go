@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -404,15 +406,37 @@ func cmdWhich() {
 }
 
 func cmdEdit() {
-	editor := flag.Arg(1)
-	if editor == "" {
-		editor = os.Getenv("EDITOR")
+	editorName := ""
+	editorArgs := []string{}
+	if flag.NArg() > 1 {
+		editorName = flag.Arg(1)
+		editorArgs = flag.Args()[1:]
+	} else {
+		editorName = os.Getenv("EDITOR")
 	}
-	if editor == "" {
+	if editorName == "" {
 		log.Fatal("Editor not given and" +
 			" EDITOR environment variable is not set")
 	}
-	// TODO
+	tempFile, err := ioutil.TempFile("", PROGNAME)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, dir := range getRawPathList() {
+		if someKeyMatches(dir) {
+			fmt.Fprintln(tempFile, dir)
+		}
+	}
+	editorArgs = append(editorArgs, tempFile.Name())
+	cmd := exec.Command(editorName, editorArgs...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
 }
 
 func cmdRunFiles() {
