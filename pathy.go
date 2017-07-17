@@ -434,10 +434,12 @@ func cmdShadow() {
 func cmdWhich() {
 	for _, cmd := range flag.Args()[1:] {
 		for _, dir := range getCleanPathList() {
-			fullPath := path.Join(dir, cmd)
-			if _, err := os.Lstat(fullPath); err == nil {
-				fmt.Println(fullPath)
-				break
+			for _, ext := range CurPathVar.Extensions {
+				fullPath := path.Join(dir, cmd+ext)
+				if _, err := os.Lstat(fullPath); err == nil {
+					fmt.Println(fullPath)
+					break
+				}
 			}
 		}
 	}
