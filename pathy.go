@@ -229,15 +229,46 @@ func listStyleProblems() {
 	//   non-existent directories
 	//   non-executable files in path
 	//   subdirectories in path
+
+	// path isn't normpath
+	// path doesn't exist
+	// path isn't a directory
+	// path isn't r+x by you
+	// duplicate truepaths
+	// directory in path contains subdirectories
+	// directory in path contains non-executable files
+	// does it start or end with whitespace?
+
+	// duplicate truepaths
 }
 
 func listSecurityProblems() {
-	//   current directory is not the last entry
-	//   relative directory
-	//   directory writable by world
-	//   directory writable by one or more common groups (such as 'users' or 'www')
-	//   symlinks to user-/common-group-writable directories or files in path
+	// empty path entry (means current directory, but in a very confusing way!)
+	// current directory is not the last entry
+	// relative directory
+	// directory writable by world
+	// directory writable by one or more common groups (such as 'users' or 'www')
+	// symlinks to user-/common-group/world-writable directories or files in path
+	// symlink to world writable file in a directory in path
 }
+
+// path checks
+//
+//     each item in path
+//          does it contain weird chars?
+//          does it contain backslashes (on unix)? they don't work as you might expect
+//          does it contain dollar signs? they don't expand to envars (except some bsd)
+//          does it contain semicolons? they don't translate to windows
+//          normalize syntax without looking at file system (normpath)
+//              remove trailing and double // etc.
+//              if result is different, warn about these style nits
+//          is it still a relative path?
+//             "." (dot) is ok but it should be last in path!!
+//             any other relative path is suspicious!! and shouldn't be there
+//          now we know it IS absolute
+//          convert to truepath (resolve symlinks)
+//          does it exist?
+//          is it a directory?
 
 func getRawPathList() []string {
 	return strings.Split(os.Getenv(PathVar), string(os.PathListSeparator))
