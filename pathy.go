@@ -30,19 +30,19 @@ type PathVar struct {
 	Extensions []string
 }
 
-var CurPathVar = PathVar{"", false, []string{}}
+var CurPathVar = PathVar{"", false, []string{""}}
 var KnownPathVars []PathVar
 
 func initKnownPathVars() {
-	pathExtensions := []string{}
+	pathExtensions := []string{""}
 	if runtime.GOOS == "windows" {
 		pathExtensions = []string{".bat", ".cmd", ".exe"}
 	}
 	KnownPathVars = []PathVar{
-		PathVar{"CDPATH", true, []string{}},
+		PathVar{"CDPATH", true, []string{""}},
 		PathVar{"GEM_PATH", true, []string{".rb"}},
-		PathVar{"GOPATH", true, []string{}},
-		PathVar{"LD_LIBRARY_PATH", false, []string{}},
+		PathVar{"GOPATH", true, []string{""}},
+		PathVar{"LD_LIBRARY_PATH", false, []string{".so"}},
 		PathVar{"MANPATH", true, []string{".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", ".gz"}},
 		PathVar{"PATH", false, pathExtensions},
 		PathVar{"PYTHONPATH", true, []string{".py", ".pyc"}},
@@ -643,6 +643,15 @@ func commandFuncByName(name string) func() {
 	return cmdHelp
 }
 
+func initCurPathVar() {
+	for _, knownVar := range KnownPathVars {
+		if CurPathVar.Name == knownVar.Name {
+			CurPathVar = knownVar
+			break
+		}
+	}
+}
+
 func main() {
 	initKnownPathVars()
 	initCommands()
@@ -651,5 +660,6 @@ func main() {
 	if flag.NArg() == 0 {
 		cmdHelp()
 	}
+	initCurPathVar()
 	commandFuncByName(flag.Arg(0))()
 }
