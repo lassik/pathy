@@ -20,33 +20,32 @@ import (
 const PROGNAME = "pathy"
 const PROGVERSION = "0.1.0"
 
-var PathVar string
-
 // TODO: Should extensions be case sensitive? E.g. I Python .py/.pyc
 // extensions seem to be (at least on Unix), whereas Windows
 // extensions are generally not (Microsoft file systems tend to be
 // case insensitive).
-type KnownPathVar struct {
+type PathVar struct {
 	Name       string
 	Subdirs    bool
 	Extensions []string
 }
 
-var KnownPathVars []KnownPathVar
+var CurPathVar = PathVar{"", false, []string{}}
+var KnownPathVars []PathVar
 
 func initKnownPathVars() {
 	pathExtensions := []string{}
 	if runtime.GOOS == "windows" {
 		pathExtensions = []string{".bat", ".cmd", ".exe"}
 	}
-	KnownPathVars = []KnownPathVar{
-		KnownPathVar{"CDPATH", true, []string{}},
-		KnownPathVar{"GEM_PATH", true, []string{".rb"}},
-		KnownPathVar{"GOPATH", true, []string{}},
-		KnownPathVar{"LD_LIBRARY_PATH", false, []string{}},
-		KnownPathVar{"MANPATH", true, []string{".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", ".gz"}},
-		KnownPathVar{"PATH", false, pathExtensions},
-		KnownPathVar{"PYTHONPATH", true, []string{".py", ".pyc"}},
+	KnownPathVars = []PathVar{
+		PathVar{"CDPATH", true, []string{}},
+		PathVar{"GEM_PATH", true, []string{".rb"}},
+		PathVar{"GOPATH", true, []string{}},
+		PathVar{"LD_LIBRARY_PATH", false, []string{}},
+		PathVar{"MANPATH", true, []string{".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", ".gz"}},
+		PathVar{"PATH", false, pathExtensions},
+		PathVar{"PYTHONPATH", true, []string{".py", ".pyc"}},
 	}
 }
 
@@ -271,7 +270,7 @@ func listSecurityProblems() {
 //          is it a directory?
 
 func getRawPathList() []string {
-	return strings.Split(os.Getenv(PathVar), string(os.PathListSeparator))
+	return strings.Split(os.Getenv(CurPathVar.Name), string(os.PathListSeparator))
 }
 
 func cleanPathEntry(dir string) string {
@@ -312,7 +311,7 @@ func quotedPathFromPathList(pathList []string) string {
 }
 
 func exportFromPathList(pathList []string) string {
-	return "export " + PathVar + "=" + quotedPathFromPathList(pathList)
+	return "export " + CurPathVar.Name + "=" + quotedPathFromPathList(pathList)
 }
 
 func setCleanPathList(pathList []string) {
@@ -647,7 +646,7 @@ func commandFuncByName(name string) func() {
 func main() {
 	initKnownPathVars()
 	initCommands()
-	flag.StringVar(&PathVar, "V", "PATH", "environment variable to use")
+	flag.StringVar(&CurPathVar.Name, "V", "PATH", "environment variable to use")
 	flag.Parse()
 	if flag.NArg() == 0 {
 		cmdHelp()
