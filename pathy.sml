@@ -213,10 +213,13 @@ fun getUsageMessage () =
 fun usage () =
     print (getUsageMessage ());
 
-fun main [] = usage ()
-  | main (cmdName :: cmdArgs) =
+fun mainWithArgs [] = usage ()
+  | mainWithArgs (cmdName :: cmdArgs) =
     case commandNamed cmdName of
         NONE => usage ()
       | SOME (Command (_, cmd, _)) => cmd cmdArgs;
 
-main (CommandLine.arguments ());
+
+fun main () = mainWithArgs (CommandLine.arguments ());
+
+main ();
