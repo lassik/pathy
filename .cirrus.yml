@@ -1,0 +1,24 @@
+centos_task:
+  container:
+    image: centos:7
+  setup_script:
+    - yum install -y epel-release
+    - yum update -y
+    - yum install -y mlton
+  compile_script: mlton pathy.sml
+  test_script: ./pathy ls
+ubuntu_task:
+  container:
+    image: ubuntu
+  setup_script:
+    - apt update -y
+    - apt install -y mlton
+  compile_script: mlton pathy.sml
+  test_script: ./pathy ls
+macos_task:
+  osx_instance:
+    image: catalina-base
+  setup_script:
+    - brew install mlton
+  compile_script: mlton pathy.sml
+  test_script: ./pathy ls
