@@ -272,19 +272,11 @@ func getRawPathList() []string {
 	return strings.Split(os.Getenv(CurPathVar.Name), string(os.PathListSeparator))
 }
 
-func cleanPathEntry(dir string) string {
-	dir = filepath.Clean(dir)
-	for strings.HasSuffix(dir, string(os.PathSeparator)) {
-		dir = dir[:len(dir)-1]
-	}
-	return dir
-}
-
 func cleanPathList(pathList []string) []string {
 	newPathList := []string{}
 	seen := map[string]bool{}
 	for _, path := range pathList {
-		newPath := cleanPathEntry(path)
+		newPath := filepath.Clean(path)
 		if !seen[newPath] {
 			newPathList = append(newPathList, newPath)
 		}
@@ -521,12 +513,35 @@ func cmdLs() {
 	}
 }
 
+func cleanDirs(dirs []string) []string {
+	newDirs := []string{}
+	for _, newDir := range dirs {
+		newDirs = append(newDirs, filepath.Clean(newDir))
+	}
+	return newDirs
+}
+
+func removeDirs(unwantedDirs, dirs []string) []string {
+	unwantedMap := map[string]bool{}
+	for _, dir := range unwantedDirs {
+		unwantedMap[filepath.Clean(dir)] = true
+	}
+	newDirs := []string{}
+	for _, dir := range dirs {
+		if !unwantedMap[dir] {
+			newDirs = append(newDirs, dir)
+		}
+	}
+	return newDirs
+}
+
 func cmdPutFirst() {
-	setCleanPathList(append(flag.Args()[1:], getRawPathList()...))
+	setCleanPathList(append(cleanDirs(flag.Args()[1:]), getCleanPathList()...))
 }
 
 func cmdPutLast() {
-	setCleanPathList(append(getRawPathList(), flag.Args()[1:]...))
+	dirs := cleanDirs(flag.Args()[1:])
+	setCleanPathList(append(removeDirs(dirs, getCleanPathList()), dirs...))
 }
 
 func cmdRm() {
