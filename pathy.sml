@@ -1,6 +1,8 @@
 (* Copyright 2020 Lassi Kortela *)
 (* SPDX-License-Identifier: ISC *)
 
+exception PathyError of string;
+
 val PROGNAME = "pathy"
 val PROGVERSION = "0.1.0"
 
@@ -16,7 +18,13 @@ fun printToFd3 s =
            else
                ();
 
-fun getExecutableAbsPath () = "./pathy";
+fun getExecutableAbsPath () =
+    let val bin = CommandLine.name () in
+        if String.isPrefix "/" bin then
+            bin
+        else
+            raise PathyError "Program name is not an absolute path /"
+    end;
 
 fun getEnvOrBlank envar = Option.getOpt ((OS.Process.getEnv envar), "");
 
