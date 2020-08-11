@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/fatih/color"
 	"io/ioutil"
 	"log"
 	"os"
@@ -508,13 +507,15 @@ func cmdExport() {
 }
 
 func cmdLs() {
+	//out := colorable.Stdout()
 	for _, dir := range getRawPathList() {
 		if someKeyMatches(dir) {
 			_, err := os.Stat(dir)
 			if err == nil {
 				fmt.Println(dir)
 			} else {
-				color.Red(dir)
+				//out.WithColor(colorable.Red)
+				fmt.Println(dir)
 			}
 		}
 	}
