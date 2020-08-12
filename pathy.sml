@@ -219,7 +219,8 @@ fun cmdExport(args: string list) = printExport (getPathList ());
 fun cmdActivate(args: string list) =
     print (getActivateCommand (getExecutableAbsPath ()));
 
-fun cmdVersion(args: string list) = ();
+fun cmdVersion(args: string list) =
+    print (PROGNAME ^ " " ^ PROGVERSION ^ " (" ^ "os" ^ ", " ^ "sml" ^ ")\n");
 
 datatype COMMAND = Command of string * (string list -> unit) * string;
 
@@ -249,7 +250,7 @@ val commands = [
     Command ("export", cmdExport,
              "Generate an export statement in shell syntax"),
     Command ("activate", cmdActivate,
-             "Try this in your shell: eval \"$(pathy activate)\""),
+             "Try this in your shell: eval \"$($(which pathy) activate)\""),
     Command ("version", cmdVersion,
              "Show version information")
 ]
