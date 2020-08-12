@@ -33,10 +33,10 @@ val getRawPath = getEnvOrBlank;
 fun getTheRawPathList sepChar envar =
     String.fields (fn c => c = sepChar) (getRawPath envar);
 
-fun getRawPathList args =
+fun getRawPathList () =
     getTheRawPathList #":" "PATH";
 
-fun getPathList () = getRawPathList ([] : string list);
+fun getPathList () = getRawPathList ();
 
 fun quotedPathFromPathList dirs =
     String.concatWith ":" dirs;
@@ -94,12 +94,16 @@ fun lsFilesDir dirPath cands =
     end
     handle OS.SysErr (msg, eno) => [];
 
+fun printPathList (pathList) =
+    List.app (fn dir => print (dir ^ "\n"))
+             pathList;
+
+fun filterPathList args pathList =
+    List.filter (fn dir => anyMatch dir args)
+                pathList;
+
 fun cmdLs(args: string list) =
-    List.app (fn x => if anyMatch x args then
-                          print (x ^ "\n")
-                      else
-                          ())
-             (getRawPathList args);
+    printPathList (filterPathList args (getRawPathList ()));
 
 fun cmdLsNames(args: string list) =
     let fun loop [] = ()
@@ -107,9 +111,7 @@ fun cmdLsNames(args: string list) =
             (List.app (fn name => print (name ^ "\n"))
                       (lsFilesDir dir args);
              loop dirs)
-    in
-        loop (getRawPathList args)
-    end;
+    in loop (filterPathList args (getRawPathList ())) end;
 
 fun cmdLsFiles(args: string list) =
     let fun loop [] = ()
@@ -117,9 +119,7 @@ fun cmdLsFiles(args: string list) =
             (List.app (fn name => print (dir ^ "/" ^ name ^ "\n"))
                       (lsFilesDir dir args);
              loop dirs)
-    in
-        loop (getRawPathList args)
-    end;
+    in loop (filterPathList args (getRawPathList ())) end;
 
 fun cmdRunFiles(args: string list) = ();
 
@@ -137,7 +137,82 @@ fun cmdShadow(args: string list) = ();
 
 fun cmdDoctor(args: string list) = ();
 
-fun cmdEdit(args: string list) = ();
+val defaultEditor = "vi";
+
+fun getEditor () =
+    case OS.Process.getEnv "EDITOR" of
+        SOME value => if value = "" then defaultEditor else value
+      | NONE => defaultEditor;
+
+fun writeTextFile (file, string) =
+    case TextIO.openOut file
+     of s => (TextIO.output (s, string);
+              TextIO.closeOut s);
+
+fun readTextFile file =
+    case TextIO.openIn file
+     of s => case TextIO.inputAll s
+              of string => ((TextIO.closeIn s); string);
+
+fun trimWhitespace string =
+    let val n = String.size string
+        fun left a =
+            if a = n then ""
+            else if Char.isSpace (String.sub (string, a)) then left (a + 1)
+            else right a n
+        and right a b =
+            if b = a then ""
+            else if Char.isSpace (String.sub (string, (b - 1))) then
+                right a (b - 1)
+            else String.substring (string, a, (b - a))
+    in left 0 end;
+
+fun stringLines string = String.fields (fn c => c = #"\n") string;
+
+(* TODO: case insensitive *)
+fun confirm prompt =
+    case prompt ^  "? [yN] "
+     of fullPrompt =>
+        let fun loop () =
+                ((print fullPrompt);
+                 case (TextIO.inputLine TextIO.stdIn)
+                  of NONE => loop ()
+                   | SOME line => case trimWhitespace line
+                                   of "yes" => true
+                                    | "no" => false
+                                    | "y" => true
+                                    | "n" => false
+                                    | _ => loop ());
+        in loop () end;
+
+fun cmdEdit (args: string list) =
+    let val pathVar = "PATH"
+        val oldPath = getPathList ()
+        val editor = getEditor ()
+        val tempfile = OS.FileSys.tmpName ()
+    in writeTextFile (tempfile, (lines (oldPath)));
+       let val status = OS.Process.system (editor ^ " " ^ tempfile) in
+           if not (OS.Process.isSuccess status) then
+               print "Failed\n"
+           else
+               let val newPath =
+                       (List.filter (fn line => line <> "")
+                                    (List.map (op trimWhitespace)
+                                              (stringLines
+                                                   (readTextFile tempfile))))
+               in
+                   if newPath = oldPath then
+                       print "No changes.\n"
+                   else
+                       (printPathList newPath;
+                        print "\n";
+                        if confirm ("Use this new " ^ pathVar) then
+                            print (pathVar ^ " changed.\n")
+                        else
+                            print (pathVar ^ " not changed.\n"))
+               end
+       end
+    end;
 
 fun cmdExport(args: string list) = printExport (getPathList ());
 
@@ -218,7 +293,6 @@ fun mainWithArgs [] = usage ()
     case commandNamed cmdName of
         NONE => usage ()
       | SOME (Command (_, cmd, _)) => cmd cmdArgs;
-
 
 fun main () = mainWithArgs (CommandLine.arguments ());
 
