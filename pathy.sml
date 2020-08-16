@@ -129,8 +129,6 @@ fun cmdPutFirst(args: string list) =
 fun cmdPutLast(args: string list) =
     printExportToFd3 ((getPathList ()) @ (map (op cleanDir) args));
 
-fun cmdRm(args: string list) = ();
-
 fun cmdWhich(args: string list) = ();
 
 fun cmdShadow(args: string list) = ();
@@ -220,80 +218,80 @@ fun cmdActivate(args: string list) =
     print (getActivateCommand (getExecutableAbsPath ()));
 
 fun cmdVersion(args: string list) =
-    print (PROGNAME ^ " " ^ PROGVERSION ^ " (" ^ "os" ^ ", " ^ "sml" ^ ")\n");
+    let val os = MLton.Platform.OS.toString (MLton.Platform.OS.host)
+        val ar = MLton.Platform.Arch.toString (MLton.Platform.Arch.host)
+    in print (PROGNAME ^ " " ^ PROGVERSION ^ " (" ^ os ^ ", " ^ ar ^ ")\n")
+    end;
 
-datatype COMMAND = Command of string * (string list -> unit) * string;
+fun listMax ints = List.foldl (op Int.max) 0 ints;
 
-val commands = [
-    Command ("ls", cmdLs,
-             "List path entries (in order from first to last)"),
-    Command ("ls-names", cmdLsNames,
-             "List all files in path (names only)"),
-    Command ("ls-files", cmdLsFiles,
-             "List all files in path (full pathnames)"),
-    Command ("run-files", cmdRunFiles,
-             "Run program, feeding it filenames on stdin"),
-    Command ("put-first", cmdPutFirst,
-             "Add or move the given entry to the beginning of the path"),
-    Command ("put-last", cmdPutLast,
-             "Add or move the given entry to the end of the path"),
-    Command ("rm", cmdRm,
-             "Remove path entries (you'll be asked for each entry)"),
-    Command ("which", cmdWhich,
-             "See which file matches first in path"),
-    Command ("shadow", cmdShadow,
-             "Show name conflicts"),
-    Command ("doctor", cmdDoctor,
-             "Find potential path problems"),
-    Command ("edit", cmdEdit,
-             "Edit the path in EDITOR or another program"),
-    Command ("export", cmdExport,
-             "Generate an export statement in shell syntax"),
-    Command ("activate", cmdActivate,
-             "Try this in your shell: eval \"$($(which pathy) activate)\""),
-    Command ("version", cmdVersion,
-             "Show version information")
+fun commands () = [
+    ("ls", cmdLs,
+     "List path entries (in order from first to last)"),
+    ("ls-names", cmdLsNames,
+     "List all files in path (names only)"),
+    ("ls-files", cmdLsFiles,
+     "List all files in path (full pathnames)"),
+    ("run-files", cmdRunFiles,
+     "Run program, feeding it filenames on stdin"),
+    ("put-first", cmdPutFirst,
+     "Add or move the given entry to the beginning of the path"),
+    ("put-last", cmdPutLast,
+     "Add or move the given entry to the end of the path"),
+    ("which", cmdWhich,
+     "See which file matches first in path"),
+    ("shadow", cmdShadow,
+     "Show name conflicts"),
+    ("doctor", cmdDoctor,
+     "Find potential path problems"),
+    ("edit", cmdEdit,
+     "Edit the path in EDITOR or another program"),
+    ("export", cmdExport,
+     "Generate an export statement in shell syntax"),
+    ("activate", cmdActivate,
+     "Try this in your shell: eval \"$($(which pathy) activate)\""),
+    ("help", cmdHelp,
+     "Show this help"),
+    ("version", cmdVersion,
+     "Show version information")
 ]
+and getUsageMessage () =
+    "This is " ^ PROGNAME ^ ", helping you work with" ^
+    " PATH and similar environment variables." ^ "\n" ^
+    "Try `man " ^ PROGNAME ^ "` for a complete guide." ^ "\n" ^
+    "\n" ^
+    let val commandNames = List.map (fn x => #1 x) (commands ())
+        val width = listMax (List.map String.size commandNames)
+    in String.concat (List.map (fn (name, _, help) =>
+                                   PROGNAME ^ " " ^
+                                   (StringCvt.padRight #" " width name) ^
+                                   "  " ^ help ^ "\n")
+                               (commands ()))
+    end
+and usage () =
+    print (getUsageMessage ())
+and cmdHelp (args: string list) =
+    usage ();
 
 fun commandNamed name =
     let
         fun search [] = NONE
           | search (cmd  :: cmds) =
             (case cmd of
-                 Command (cmdName, _, _) =>
+                 (cmdName, _, _) =>
                  if cmdName = name then
                      SOME cmd
                  else
                      search cmds)
     in
-        search commands
+        search (commands ())
     end;
 
-fun listMax ints = List.foldl (op Int.max) 0 ints;
-val commandNames = List.map (fn Command x => #1 x) commands;
-
-fun getUsageMessage () =
-    "This is " ^ PROGNAME ^ ", helping you work with" ^
-    " PATH and similar environment variables." ^ "\n" ^
-    "Try `man " ^ PROGNAME ^ "` for a complete guide." ^ "\n" ^
-    "\n" ^
-    let val width = listMax (List.map String.size commandNames)
-    in
-        String.concat (List.map (fn Command (cmdName, _, cmdHelp) =>
-                                    PROGNAME ^ " " ^
-                                    (StringCvt.padRight #" " width cmdName) ^
-                                    "  " ^ cmdHelp ^ "\n")
-                                commands)
-    end;
-
-fun usage () =
-    print (getUsageMessage ());
-
-fun mainWithArgs [] = usage ()
+fun mainWithArgs [] = cmdLs []
   | mainWithArgs (cmdName :: cmdArgs) =
     case commandNamed cmdName of
         NONE => usage ()
-      | SOME (Command (_, cmd, _)) => cmd cmdArgs;
+      | SOME (_, cmd, _) => cmd cmdArgs;
 
 fun main () = mainWithArgs (CommandLine.arguments ());
 
