@@ -193,13 +193,16 @@ fun cmdWhich(args: string list) =
                  args;
 
 fun cmdShadow(args: string list) =
-    List.app (fn group =>
-                 ((List.app (fn (dir, name) =>
-                                printLine (joinPath (dir, name)))
-                            group);
-                  (printLine "")))
-             (List.filter (fn group => (List.length group) > 1)
-                          (getGroups args));
+    (List.foldl (fn (group, hadAny) =>
+                    ((if hadAny then (printLine "") else ());
+                     (List.app (fn (dir, name) =>
+                                   printLine (joinPath (dir, name)))
+                               group);
+                     true))
+                false
+                (List.filter (fn group => (List.length group) > 1)
+                             (getGroups args));
+     ());
 
 fun cmdDoctor(args: string list) = ();
 
