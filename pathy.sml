@@ -194,7 +194,8 @@ fun cmdWhich(args: string list) =
 
 fun cmdShadow(args: string list) =
     List.app (fn group =>
-                 ((List.app (fn (dir, name) => printLine (joinPath (dir, name)))
+                 ((List.app (fn (dir, name) =>
+                                printLine (joinPath (dir, name)))
                             group);
                   (printLine "")))
              (List.filter (fn group => (List.length group) > 1)
