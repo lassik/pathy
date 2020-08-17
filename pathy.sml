@@ -6,6 +6,26 @@ exception PathyError of string;
 val PROGNAME = "pathy"
 val PROGVERSION = "0.1.0"
 
+fun genericSort (equal, less, xs) =
+    let fun insert (x, []) = [x]
+          | insert (x, (y::ys)) =
+            if equal (x, y) then (y::ys)
+            else if less (x, y) then (x::y::ys)
+            else (y::(insert (x, ys)))
+        fun loop [] = []
+          | loop (x::xs) = insert (x, (loop xs))
+    in loop xs end;
+
+fun sort xs =
+    genericSort ((fn (a, b) => false), (fn (a, b) => a < b), xs);
+fun sortLess (xs, less) =
+    genericSort ((fn (a, b) => false), less, xs);
+fun sortUniq xs: string list =
+    genericSort ((fn (a, b) => a = b), (fn (a, b) => a <= b), xs);
+
+fun joinPath (dir, name) = dir ^ "/" ^ name;
+fun printLine s = print (s ^ "\n");
+
 fun cleanDir dir = dir;
 
 fun printToFd3 s =
@@ -14,7 +34,7 @@ fun printToFd3 s =
      ())
     handle OS.SysErr (_, errno) =>
            if errno = SOME Posix.Error.badf then
-               print "file descriptor 3 is not open\n"
+               printLine "file descriptor 3 is not open"
            else
                ();
 
@@ -95,31 +115,42 @@ fun lsFilesDir dirPath cands =
     handle OS.SysErr (msg, eno) => [];
 
 fun printPathList (pathList) =
-    List.app (fn dir => print (dir ^ "\n"))
-             pathList;
+    List.app printLine pathList;
 
 fun filterPathList args pathList =
     List.filter (fn dir => anyMatch dir args)
                 pathList;
 
+fun foldAllFiles (filters, cons, state) =
+    let fun outer (state, []) = state
+          | outer (state, dir::dirs) =
+            outer ((inner (state, dir, (lsFilesDir dir filters))), dirs)
+        and inner (state, dir, []) = state
+          | inner (state, dir, name::names) =
+            inner ((cons (dir, name, state)), dir, names)
+    in outer (state, (getRawPathList ())) end;
+
+fun forAllFiles (filters, visit) =
+    foldAllFiles (filters,
+                  (fn (dir, name, _) => (visit (dir, name); ())),
+                  ());
+
 fun cmdLs(args: string list) =
     printPathList (filterPathList args (getRawPathList ()));
 
 fun cmdLsNames(args: string list) =
-    let fun loop [] = ()
-          | loop (dir :: dirs) =
-            (List.app (fn name => print (name ^ "\n"))
-                      (lsFilesDir dir args);
-             loop dirs)
-    in loop (filterPathList args (getRawPathList ())) end;
+    List.app printLine
+             (sortUniq (foldAllFiles (args,
+                                      (fn (dir, name, names)
+                                          => name :: names),
+                                      [])));
 
 fun cmdLsFiles(args: string list) =
-    let fun loop [] = ()
-          | loop (dir :: dirs) =
-            (List.app (fn name => print (dir ^ "/" ^ name ^ "\n"))
-                      (lsFilesDir dir args);
-             loop dirs)
-    in loop (filterPathList args (getRawPathList ())) end;
+    List.app printLine
+             (sortUniq (foldAllFiles (args,
+                                      (fn (dir, name, files)
+                                          => (joinPath (dir, name)) :: files),
+                                      [])));
 
 fun cmdRunFiles(args: string list) = ();
 
@@ -131,7 +162,28 @@ fun cmdPutLast(args: string list) =
 
 fun cmdWhich(args: string list) = ();
 
-fun cmdShadow(args: string list) = ();
+fun groupBy key xs =
+    let fun loop (gs, g, []) = gs
+          | loop (gs, [], (x::xs)) = loop (gs, [x], xs)
+          | loop (gs, (ga::g), (x::xs)) = if key x = key ga then
+                                              loop (gs, (x::ga::g), xs)
+                                          else
+                                              loop (((ga::g)::gs), [x], xs)
+    in loop ([], [], xs) end;
+
+fun cmdShadow(args: string list) =
+    List.app (fn group =>
+                 ((List.app (fn (dir, name) => printLine (joinPath (dir, name)))
+                            group);
+                  (printLine "")))
+             (List.filter (fn group => (List.length group) > 1)
+                          (groupBy (fn a => #2 a)
+                                   (sortLess ((foldAllFiles
+                                                   (args,
+                                                    (fn (dir, name, pairs)
+                                                        => ((dir, name) :: pairs)),
+                                                    [])),
+                                              (fn (a, b) => (#2 a) < (#2 b))))));
 
 fun cmdDoctor(args: string list) = ();
 
@@ -191,7 +243,7 @@ fun cmdEdit (args: string list) =
     in writeTextFile (tempfile, (lines (oldPath)));
        let val status = OS.Process.system (editor ^ " " ^ tempfile) in
            if not (OS.Process.isSuccess status) then
-               print "Failed\n"
+               printLine "Failed"
            else
                let val newPath =
                        (List.filter (fn line => line <> "")
@@ -200,14 +252,14 @@ fun cmdEdit (args: string list) =
                                                    (readTextFile tempfile))))
                in
                    if newPath = oldPath then
-                       print "No changes.\n"
+                       printLine "No changes."
                    else
                        (printPathList newPath;
                         print "\n";
                         if confirm ("Use this new " ^ pathVar) then
-                            print (pathVar ^ " changed.\n")
+                            printLine (pathVar ^ " changed.")
                         else
-                            print (pathVar ^ " not changed.\n"))
+                            printLine (pathVar ^ " not changed."))
                end
        end
     end;
@@ -220,7 +272,7 @@ fun cmdActivate(args: string list) =
 fun cmdVersion(args: string list) =
     let val os = MLton.Platform.OS.toString (MLton.Platform.OS.host)
         val ar = MLton.Platform.Arch.toString (MLton.Platform.Arch.host)
-    in print (PROGNAME ^ " " ^ PROGVERSION ^ " (" ^ os ^ ", " ^ ar ^ ")\n")
+    in printLine (PROGNAME ^ " " ^ PROGVERSION ^ " (" ^ os ^ ", " ^ ar ^ ")")
     end;
 
 fun listMax ints = List.foldl (op Int.max) 0 ints;
@@ -228,16 +280,16 @@ fun listMax ints = List.foldl (op Int.max) 0 ints;
 fun commands () = [
     ("ls", cmdLs,
      "List path entries (in order from first to last)"),
+    ("put-first", cmdPutFirst,
+     "Add or move the given entry to the beginning of the path"),
+    ("put-last", cmdPutLast,
+     "Add or move the given entry to the end of the path"),
     ("ls-names", cmdLsNames,
      "List all files in path (names only)"),
     ("ls-files", cmdLsFiles,
      "List all files in path (full pathnames)"),
     ("run-files", cmdRunFiles,
      "Run program, feeding it filenames on stdin"),
-    ("put-first", cmdPutFirst,
-     "Add or move the given entry to the beginning of the path"),
-    ("put-last", cmdPutLast,
-     "Add or move the given entry to the end of the path"),
     ("which", cmdWhich,
      "See which file matches first in path"),
     ("shadow", cmdShadow,
@@ -245,15 +297,15 @@ fun commands () = [
     ("doctor", cmdDoctor,
      "Find potential path problems"),
     ("edit", cmdEdit,
-     "Edit the path in EDITOR or another program"),
+     "Edit the path in $EDITOR"),
     ("export", cmdExport,
-     "Generate an export statement in shell syntax"),
+     "Show an export statement in shell syntax"),
     ("activate", cmdActivate,
-     "Try this in your shell: eval \"$($(which pathy) activate)\""),
-    ("help", cmdHelp,
-     "Show this help"),
+     "Try in your shell: eval \"$($(which pathy) activate)\""),
     ("version", cmdVersion,
-     "Show version information")
+     "Show version information"),
+    ("help", cmdHelp,
+     "Show this help")
 ]
 and getUsageMessage () =
     "This is " ^ PROGNAME ^ ", helping you work with" ^
@@ -287,7 +339,7 @@ fun commandNamed name =
         search (commands ())
     end;
 
-fun mainWithArgs [] = cmdLs []
+fun mainWithArgs [] = cmdHelp []
   | mainWithArgs (cmdName :: cmdArgs) =
     case commandNamed cmdName of
         NONE => usage ()
