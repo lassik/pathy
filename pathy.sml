@@ -160,8 +160,6 @@ fun cmdPutFirst(args: string list) =
 fun cmdPutLast(args: string list) =
     printExportToFd3 ((getPathList ()) @ (map (op cleanDir) args));
 
-fun cmdWhich(args: string list) = ();
-
 fun groupBy key xs =
     let fun loop (gs, g, []) = gs
           | loop (gs, [], (x::xs)) = loop (gs, [x], xs)
@@ -171,19 +169,36 @@ fun groupBy key xs =
                                               loop (((ga::g)::gs), [x], xs)
     in loop ([], [], xs) end;
 
+fun getGroups filters =
+    groupBy (fn a => #2 a)
+            (sortLess ((foldAllFiles
+                            (filters,
+                             (fn (dir, name, pairs)
+                                 => ((dir, name) :: pairs)),
+                             [])),
+                       (fn (a, b) => (#2 a) < (#2 b))));
+
+fun cmdWhich(args: string list) =
+    case getGroups []
+     of groups =>
+        List.app (fn goalName =>
+                     List.app (fn group =>
+                                  case List.nth (group, 0)
+                                   of (dir, name) =>
+                                      if name = goalName then
+                                          (printLine (joinPath (dir, name)))
+                                      else
+                                          ())
+                              groups)
+                 args;
+
 fun cmdShadow(args: string list) =
     List.app (fn group =>
                  ((List.app (fn (dir, name) => printLine (joinPath (dir, name)))
                             group);
                   (printLine "")))
              (List.filter (fn group => (List.length group) > 1)
-                          (groupBy (fn a => #2 a)
-                                   (sortLess ((foldAllFiles
-                                                   (args,
-                                                    (fn (dir, name, pairs)
-                                                        => ((dir, name) :: pairs)),
-                                                    [])),
-                                              (fn (a, b) => (#2 a) < (#2 b))))));
+                          (getGroups args));
 
 fun cmdDoctor(args: string list) = ();
 
